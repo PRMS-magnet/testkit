@@ -1,0 +1,19 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Luau Run
+        shell: pwsh
+        env:
+          LUAU_RUN_INSTALL_YES: "1"
+        run: irm https://github.com/PRMS-magnet/luau-run/releases/download/v0.1.0/install.ps1 | iex
+      - name: Test
+        run: luau-run test

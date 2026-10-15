@@ -1,0 +1,5 @@
+# Tools for working on this package, managed by Rokit. Luau Run manages Lute itself.
+
+[tools]
+stylua = "johnnymorganz/stylua@2.4.0"
+pesde = "daimond113/pesde@0.7.3+registry.0.2.3"

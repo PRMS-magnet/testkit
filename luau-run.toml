@@ -1,0 +1,5 @@
+# Luau Run settings for this project; luau-run doctor shows what each is set to
+
+[test]
+roots = ["tests"]
+default-runtime = "lute"
