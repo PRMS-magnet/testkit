@@ -1,10 +1,8 @@
 --!strict
 --[[
-	Coverage-free guidance: a seen-fingerprint set + a working corpus of retained program
-	prefixes. A seed whose checkpoint reaches a NOVEL fingerprint has its prefix retained for
-	the mutator to draw from; repeats are dropped. Engine-agnostic (a fingerprint is a number,
-	a prefix is opaque). Use it only where it is shown to kill mutants faster than
-	random+swarm (BeDivFuzz: a diversity proxy can win while bug-finding loses to random).
+	Keeps a program prefix the first time its state fingerprint is seen, as a corpus for the
+	mutator. New states are not new bugs, and guidance like this can lose to plain random
+	inputs (BeDivFuzz), so measure it against random before relying on it.
 ]]
 local Guidance = {}
 Guidance.__index = Guidance
@@ -21,7 +19,7 @@ function Guidance.new(): Guidance
 	return setmetatable({ _Seen = {}, _Corpus = {} }, Guidance) :: any
 end
 
--- Returns true + retains the prefix iff this fingerprint is novel
+-- True when the fingerprint is new, which also keeps the prefix
 function Guidance.Observe(self: Guidance, fingerprint: number, prefix: any): boolean
 	if self._Seen[fingerprint] then
 		return false

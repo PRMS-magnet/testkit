@@ -1,16 +1,13 @@
 --!strict
 --[[
-	The symbolic Program = (Schema, OpList). Ops reference entities by logical id and
-	components by schema index, so one artifact serves generation, mutation, shrinking,
-	and the regression corpus. encode/decode persist an op list for the corpus; a
-	compact line-per-op serialiser is enough - it only needs to replay exactly.
+	Stores an op list one line per op, for a regression corpus that only has to replay
+	exactly. The first field is the op's kind; every other field is read back as a number.
 ]]
 local Program = {}
 
--- Field 1 (K) is the op kind (string); every other field is a numeric arg
 export type Op = { [string]: any }
 
--- Default field order; other op shapes pass their own field list to encode/decode
+-- Other op shapes pass their own field list
 local DEFAULT_FIELDS = { "K", "L", "C", "V", "N", "Begin", "Rel", "T" }
 
 function Program.encodeOps(ops: { Op }, fields: { string }?): string
@@ -26,7 +23,6 @@ function Program.encodeOps(ops: { Op }, fields: { string }?): string
 	return table.concat(lines, "\n")
 end
 
--- Field 1 (the op kind) decodes as a string; every later field decodes via tonumber
 function Program.decodeOps(s: string, fields: { string }?): { Op }
 	local order: { string } = fields or DEFAULT_FIELDS
 	local ops = {}

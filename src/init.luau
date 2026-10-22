@@ -1,12 +1,8 @@
 --!strict
---[=[
-	@class TestKit
-
-	Domain-agnostic property-testing core: a symbolic-program differential
-	fuzzer plus shrinker, mutator, guidance corpus, and an oracle-necessity
-	grader. Consumers bind their own Schema/Model/OpGen/Adapter/Oracles on top;
-	every module here stays engine-agnostic.
-]=]
+--[[
+	Property testing against a model. The caller supplies the ops, the adapter that
+	applies them and the oracles that check it; nothing here knows what is being tested.
+]]
 
 local Executor = require("@self/Executor")
 local Mutator = require("@self/Mutator")

@@ -1,9 +1,7 @@
 --!strict
 --[[
-	Oracle-necessity matrix. For a fault the full suite kills, drop each oracle in turn and
-	see if the fault survives: a survival proves that oracle is the load-bearing detector, a
-	continued kill proves it is redundant for this fault. The union of load-bearing oracles
-	across all fault mutants is the proof the suite has no dead-weight oracle.
+	For a planted fault the full oracle list catches, drops each oracle in turn. If the
+	fault then goes uncaught, no other oracle catches it.
 ]]
 local OracleNecessity = {}
 

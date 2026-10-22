@@ -1,9 +1,8 @@
 --!strict
 --[[
-	Program-level mutator: picks ONE op and replaces ONE of its fields via the supplied
-	`mutateField` (the domain strategy lives in the consumer's OpGen). Drives exploration
-	around an interesting input. The adapter tolerates ops made illegal by the edit and the
-	shrinker re-legalises, so the mutator never has to keep the program legal itself.
+	Replaces one random op with mutateField's version of it, to explore near an input that
+	found something. The result can be illegal, such as an op on something already deleted,
+	so the adapter must accept such ops.
 ]]
 local Mutator = {}
 

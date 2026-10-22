@@ -1,9 +1,8 @@
 --!strict
 --[[
-	Generic driver: applies a Program's ops through an adapter, running each oracle at
-	checkpoints (+ once at the end). Returns the first oracle failure string, or nil.
-	Oracles are `function(adapter, opIndex) -> string?` - the Executor knows nothing
-	about the engine, only the adapter + oracle contract.
+	Applies each op with adapter:Apply and runs the oracles every checkEvery ops, then once
+	after the last op with #ops + 1 as the index. Errors are not caught, so the caller
+	decides whether a crash counts as a failure.
 ]]
 local Executor = {}
 

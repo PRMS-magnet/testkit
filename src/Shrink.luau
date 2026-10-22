@@ -1,18 +1,17 @@
 --!strict
 --[[
-	Delta-debugging shrinker. First delete-and-retry to a minimal failing op sequence
-	(orphaned ops are tolerated by the executor, so a deletion that orphans a later op is
-	safe - the orphan is pruned in a later pass). Then an argument-level pass binary-reduces
-	each surviving op's numeric fields toward their floor, keeping the smallest value that
-	still fails. The optional `scopeLegal` predicate (the consumer's Precondition.ScopeLegal)
-	gates argument shrinks once the program is reference-legal, so a value/ref edit never
-	introduces a dangling reference (qsm remapVars). Delete passes run before argument passes
-	(cheaper size-reducers first, DRMacIver). Pass a `fieldFloor` map for op shapes whose
-	numeric fields differ from the default.
+	Deletes ops one at a time while the list still fails, then lowers each numeric field to
+	the smallest value that still fails. Deletion goes first as the cheaper reduction, as in
+	Hypothesis.
+
+	A deletion can leave a later op naming something that no longer exists, so the adapter
+	must accept such an op; a later pass deletes it if the failure does not need it.
+	scopeLegal keeps the field pass from breaking a list whose references are legal, as
+	quickcheck-state-machine does.
 ]]
 local Shrink = {}
 
--- Default per-field floor for the argument pass; fields absent here are not value-shrunk. Other op shapes pass their own via Reduce's fieldFloor arg
+-- Fields not listed are never lowered; other op shapes pass their own fieldFloor
 local DEFAULT_FIELD_FLOOR = { V = 0, C = 1, N = 1, Begin = 0, L = 1, T = 1 }
 
 local function withField(ops: { any }, index: number, field: string, value: number): { any }
@@ -31,7 +30,7 @@ function Shrink.Reduce(
 ): { any }
 	local cur = ops
 
-	-- 1. Delete-and-retry (no scope gate: tolerate-then-prune handles orphans)
+	-- 1. Delete ops, with no scope check, since a later pass deletes an orphan the failure does not need
 	local changed = true
 	while changed do
 		changed = false
@@ -49,8 +48,7 @@ function Shrink.Reduce(
 		end
 	end
 
-	-- 2. Argument pass: only enforce scope once the base is already reference-legal, so a
-	-- program still carrying tolerated orphans is not blocked from value-shrinking
+	-- 2. Lower fields, checking scope only when the list is already legal, so one still holding orphans can shrink
 	local enforceScope = scopeLegal ~= nil and scopeLegal(cur)
 	local function accept(cand: { any }): boolean
 		return replayFails(cand) and (not enforceScope or (scopeLegal :: any)(cand))
@@ -64,7 +62,7 @@ function Shrink.Reduce(
 			for field, floor in floors do
 				local orig = cur[i][field]
 				if type(orig) == "number" and orig > floor then
-					-- binary-reduce toward the floor: smallest still-failing value
+					-- Binary search assumes failure is monotonic in the field; the accept below confirms the result
 					local lo, hi = floor, orig
 					while lo < hi do
 						local mid = (lo + hi) // 2

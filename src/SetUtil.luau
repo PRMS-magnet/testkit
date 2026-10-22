@@ -1,5 +1,5 @@
 --!strict
---[[ Set helpers for oracles: order-insensitive Equal/Union/Disjoint over presence sets, plus ordered SeqEqual for sequence-shaped primitives. ]]
+-- Helpers for oracles; a set maps each member to true
 local SetUtil = {}
 
 function SetUtil.Disjoint(a: { [number]: boolean }, b: { [number]: boolean }): boolean
@@ -36,7 +36,6 @@ function SetUtil.Union(a: { [number]: boolean }, b: { [number]: boolean }): { [n
 	return u
 end
 
--- Ordered equality: two sequences match element-for-element (order-sensitive primitives)
 function SetUtil.SeqEqual(a: { number }, b: { number }): boolean
 	if #a ~= #b then
 		return false
