@@ -6,7 +6,7 @@ local Program = require("../../src/Program")
 
 describe("Program", function()
 	it("round-trips ops through encode and decode with the default fields", function()
-		local Ops = { { K = "Insert", L = 1, C = 2, V = 3 }, { K = "Remove", L = 4, T = 9 } }
+		local Ops: { Program.Op } = { { K = "Insert", L = 1, C = 2, V = 3 }, { K = "Remove", L = 4, T = 9 } }
 		local Text = Program.encodeOps(Ops)
 		expect(Text).toBe("Insert|1|2|3||||\nRemove|4||||||9")
 		expect(Program.decodeOps(Text)).toEqual(Ops)
