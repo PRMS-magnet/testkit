@@ -1,25 +1,26 @@
 # TestKit - Property testing for Luau
 
-*Last updated: 2026-10-15*
+*Started: 2026-06-18 | Last major update: 2026-07-01 | Last updated: 2026-10-22*
 
 Runs a list of operations against your code and a simple model of it, checks
 that the two agree, and shrinks a failing list to the smallest one that still
 fails.
+
+**TestKit is unpolished.** It is published because
+[collections](https://github.com/PRMS-magnet/collections) tests with it. It
+works, but its API is what that project needed, and a later 0.x release will
+change it.
 
 ## Status
 
 | area | state |
 |---|---|
 | Lute | tested |
-| Roblox | not tested in Studio yet |
 | dependencies | none |
 | tests | [![tests workflow on main](https://github.com/PRMS-magnet/testkit/actions/workflows/test.yml/badge.svg?branch=main&event=push)](https://github.com/PRMS-magnet/testkit/actions/workflows/test.yml) |
 
 Tested with Lute `1.0.1-nightly.20260729`, through
 [Luau Run](https://github.com/PRMS-magnet/luau-run).
-
-TestKit is a development dependency. Your tests use it; your package does not
-ship it.
 
 ## Install
 
@@ -30,41 +31,67 @@ TestKit = { name = "prms_magnet/testkit", version = "^0.1.0", target = "luau" }
 
 ## Quick start
 
+A counter with a bug, tested against a plain number:
 ```luau
 local TestKit = require("./luau_packages/TestKit")
 
--- A counter with a bug: it never goes past 3. The model is a plain number.
+-- The code under test: a counter with a bug, it never goes past 3
+local function NewCounter()
+	local Counter = { Value = 0 }
+	function Counter:Add(Amount)
+		self.Value = math.min(self.Value + Amount, 3)
+	end
+	return Counter
+end
+
+-- Applies each op to the counter and to its model, a plain number
 local function NewAdapter()
-	local Adapter = { Real = 0, Model = 0 }
+	local Adapter = { Counter = NewCounter(), Model = 0 }
 	function Adapter:Apply(Op)
-		self.Real = math.min(self.Real + Op.V, 3)
+		self.Counter:Add(Op.V)
 		self.Model += Op.V
 	end
 	return Adapter
 end
 
+-- Each oracle returns a failure message, or nil when the counter matches the model
 local Oracles = {
 	function(Adapter, OpIndex)
-		if Adapter.Real ~= Adapter.Model then
-			return `op {OpIndex}: counter is {Adapter.Real}, model is {Adapter.Model}`
+		if Adapter.Counter.Value ~= Adapter.Model then
+			return `op {OpIndex}: counter is {Adapter.Counter.Value}, model is {Adapter.Model}`
 		end
 		return nil
 	end,
 }
 
-local function Fails(Ops)
-	return TestKit.Executor.Run(Ops, NewAdapter(), Oracles, 1) ~= nil
+local function Check(Ops)
+	return TestKit.Executor.Run(Ops, NewAdapter(), Oracles, 1) -- 1 checks after every op
 end
 
-local Ops = { { K = "add", V = 1 }, { K = "add", V = 2 }, { K = "add", V = 5 }, { K = "add", V = 1 } }
-print(TestKit.Executor.Run(Ops, NewAdapter(), Oracles, 1)) -- op 3: counter is 3, model is 8
-print(TestKit.Program.encodeOps(TestKit.Shrink.Reduce(Ops, Fails), { "K", "V" })) -- add|4
+for Seed = 1, 100 do
+	math.randomseed(Seed)
+	local Ops = {}
+	for _ = 1, math.random(1, 10) do
+		table.insert(Ops, { K = "add", V = math.random(0, 3) }) -- K is the op's kind; Shrink lowers V by default
+	end
+
+	local Failure = Check(Ops)
+	if Failure then
+		local Smallest = TestKit.Shrink.Reduce(Ops, function(Candidate)
+			return Check(Candidate) ~= nil
+		end)
+		print(`seed {Seed} failed at {Failure}`) -- seed 1 failed at op 4: counter is 3, model is 6
+		print(`{#Ops} ops shrunk to {#Smallest}:`) -- 10 ops shrunk to 2:
+		print(TestKit.Program.encodeOps(Smallest, { "K", "V" })) -- add|1 and add|3, one per line
+		break
+	end
+end
 ```
 
-The adapter applies each op to your code and to the model. An oracle is
-`function(adapter, opIndex): string?`: it returns a failure message, or `nil`
-when the state is right. Oracles run in list order and the first failure ends
-the run, so put the one whose failure says most first.
+TestKit does not make the ops. Your test generates them, here from
+`math.random` with one seed per run, so a failing seed replays exactly.
+Oracles run in list order and the first failure ends the run, so put the one
+whose message says most first.
 
 ## Modules
 
