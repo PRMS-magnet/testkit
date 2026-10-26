@@ -1,6 +1,6 @@
 name = "prms_magnet/testkit"
 version = "0.1.0"
-description = "Property-testing core for Luau: a symbolic-program differential fuzzer, a delta-debugging shrinker, a mutator and an oracle-necessity grader."
+description = "A property tester for Luau"
 license = "MIT"
 authors = ["prms-magnet"]
 repository = "https://github.com/PRMS-magnet/testkit"
