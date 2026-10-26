@@ -1,5 +1,5 @@
 name = "prms_magnet/testkit"
-version = "0.1.0"
+version = "0.1.1"
 description = "A property tester for Luau"
 license = "MIT"
 authors = ["prms-magnet"]
